@@ -444,8 +444,8 @@
 			</properties>
 			<modules>
 				<!--- =========================================== 离线 =====================                                                                             ========================= -->
-				<module>chunjun-connectors/chunjun-connector-hdfs</module>
-				<module>chunjun-connectors/chunjun-connector-hive</module>
+<!--				<module>chunjun-connectors/chunjun-connector-hdfs</module>-->
+<!--				<module>chunjun-connectors/chunjun-connector-hive</module>-->
 				<!--- =========================================== 实时 ============================================== -->
 			</modules>
 		</profile>
