@@ -23,8 +23,8 @@ import com.dtstack.chunjun.util.ReflectionUtils;
 
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.runtime.accumulators.StringifiedAccumulatorResult;
-import org.apache.flink.runtime.executiongraph.ArchivedExecutionGraph;
 import org.apache.flink.runtime.jobmaster.JobMasterGateway;
+import org.apache.flink.runtime.scheduler.ExecutionGraphInfo;
 import org.apache.flink.runtime.taskexecutor.TaskManagerConfiguration;
 import org.apache.flink.runtime.taskexecutor.rpc.RpcGlobalAggregateManager;
 import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
@@ -77,7 +77,7 @@ public class AccumulatorCollector {
         // 比task manager心跳间隔多1秒
         this.period =
                 ((TaskManagerConfiguration) context.getTaskManagerRuntimeInfo())
-                                .getTimeout()
+                                .getRpcTimeout()
                                 .toMilliseconds()
                         + 1000;
         RpcGlobalAggregateManager globalAggregateManager =
@@ -111,11 +111,11 @@ public class AccumulatorCollector {
 
     /** 收集累加器信息 */
     public void collectAccumulator() {
-        CompletableFuture<ArchivedExecutionGraph> archivedExecutionGraphFuture =
+        CompletableFuture<ExecutionGraphInfo> executionGraphFuture =
                 gateway.requestJob(Time.seconds(10));
-        ArchivedExecutionGraph archivedExecutionGraph;
+        ExecutionGraphInfo executionGraph;
         try {
-            archivedExecutionGraph = archivedExecutionGraphFuture.get();
+            executionGraph = executionGraphFuture.get();
         } catch (Exception e) {
             // 限制最大出错次数，超过最大次数则使任务失败，如果不失败，统计数据没有及时更新，会影响速率限制，错误控制等功能
             collectErrorTimes++;
@@ -128,7 +128,7 @@ public class AccumulatorCollector {
             return;
         }
         StringifiedAccumulatorResult[] accumulatorResult =
-                archivedExecutionGraph.getAccumulatorResultsStringified();
+                executionGraph.getArchivedExecutionGraph().getAccumulatorResultsStringified();
         for (StringifiedAccumulatorResult result : accumulatorResult) {
             ValueAccumulator valueAccumulator = valueAccumulatorMap.get(result.getName());
             if (valueAccumulator != null) {

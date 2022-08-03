@@ -65,8 +65,6 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.expressions.ExpressionParserImpl;
-import org.apache.flink.table.factories.FactoryUtil;
-import org.apache.flink.table.factories.TableFactoryService;
 import org.apache.flink.table.types.DataType;
 
 import com.google.common.base.Preconditions;
@@ -159,8 +157,9 @@ public class Main {
         } catch (Exception e) {
             throw new ChunJunRuntimeException(e);
         } finally {
-            FactoryUtil.getFactoryHelperThreadLocal().remove();
-            TableFactoryService.getFactoryHelperThreadLocal().remove();
+            // TODO 该类临时修改为了1.15源码中的类，先注释掉通过编译
+            //            FactoryUtil.getFactoryHelperThreadLocal().remove();
+            //            TableFactoryService.getFactoryHelperThreadLocal().remove();
         }
     }
 
@@ -336,8 +335,8 @@ public class Main {
                     ConstantValue.DIRTY_DATA_DIR_NAME);
             // TODO sql 支持restore.
 
-            FactoryUtil.setFactoryUtilHelp(factoryHelper);
-            TableFactoryService.setFactoryUtilHelp(factoryHelper);
+            //            FactoryUtil.setFactoryUtilHelp(factoryHelper);
+            //            TableFactoryService.setFactoryUtilHelp(factoryHelper);
         }
         PluginUtil.registerShipfileToCachedFile(options.getAddShipfile(), env);
     }

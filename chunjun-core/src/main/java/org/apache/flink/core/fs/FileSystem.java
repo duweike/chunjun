@@ -32,14 +32,13 @@ import org.apache.flink.configuration.IllegalConfigurationException;
 import org.apache.flink.core.fs.local.LocalFileSystem;
 import org.apache.flink.core.fs.local.LocalFileSystemFactory;
 import org.apache.flink.core.plugin.PluginManager;
-import org.apache.flink.core.plugin.PluginUtils;
 import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.TemporaryClassLoaderContext;
 
-import org.apache.flink.shaded.guava18.com.google.common.base.Splitter;
-import org.apache.flink.shaded.guava18.com.google.common.collect.ImmutableMultimap;
-import org.apache.flink.shaded.guava18.com.google.common.collect.Iterators;
-import org.apache.flink.shaded.guava18.com.google.common.collect.Multimap;
+import org.apache.flink.shaded.guava30.com.google.common.base.Splitter;
+import org.apache.flink.shaded.guava30.com.google.common.collect.ImmutableMultimap;
+import org.apache.flink.shaded.guava30.com.google.common.collect.Iterators;
+import org.apache.flink.shaded.guava30.com.google.common.collect.Multimap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,8 +144,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * local file system does not have any fault tolerance guarantees, no further requirements exist.
  *
  * <p>The above implies specifically that data may still be in the OS cache when considered
- * persistent from the local file system's perspective. Crashes that cause the OS cache to loose
- * data are considered fatal to the local machine and are not covered by the local file system's
+ * persistent from the local file system's perspective. Crashes that cause the OS cache to lose data
+ * are considered fatal to the local machine and are not covered by the local file system's
  * guarantees as defined by Flink.
  *
  * <p>That means that computed results, checkpoints, and savepoints that are written only to the
@@ -195,9 +194,6 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * @see FSDataInputStream
  * @see FSDataOutputStream
- *     <p>Utility class to encapsulate the logic of building an {@link FileSystem} 改动内容：增加方法{@link
- *     FileSystem#getCustomUnguardedFileSystem(URI,Configuration)}
- *     支持用户初始化多个同种或者不同类型的数据源，而不依赖flink-conf配置 并且不干扰flink 本身的文件系统
  */
 @Public
 public abstract class FileSystem {
@@ -252,13 +248,14 @@ public abstract class FileSystem {
             ImmutableMultimap.<String, String>builder()
                     .put("wasb", "flink-fs-azure-hadoop")
                     .put("wasbs", "flink-fs-azure-hadoop")
+                    .put("abfs", "flink-fs-azure-hadoop")
+                    .put("abfss", "flink-fs-azure-hadoop")
                     .put("oss", "flink-oss-fs-hadoop")
                     .put("s3", "flink-s3-fs-hadoop")
                     .put("s3", "flink-s3-fs-presto")
                     .put("s3a", "flink-s3-fs-hadoop")
                     .put("s3p", "flink-s3-fs-presto")
-                    .put("swift", "flink-swift-fs-hadoop")
-                    // mapr deliberately omitted for now (no dedicated plugin)
+                    .put("gs", "flink-gs-fs-hadoop")
                     .build();
 
     /** Exceptions for DIRECTLY_SUPPORTED_FILESYSTEM. */
@@ -302,120 +299,6 @@ public abstract class FileSystem {
     }
 
     /**
-     * register custom filesystem
-     *
-     * @param config the configuration from where to fetch the parameter.
-     * @param fsUri the filesystem uri.
-     */
-    public static FileSystem getCustomUnguardedFileSystem(final URI fsUri, Configuration config)
-            throws IOException {
-        checkNotNull(fsUri, "file system URI");
-        PluginManager pluginManager = PluginUtils.createPluginManagerFromRootFolder(config);
-        Collection<Supplier<Iterator<FileSystemFactory>>> factorySuppliers = new ArrayList<>(2);
-        factorySuppliers.add(() -> ServiceLoader.load(FileSystemFactory.class).iterator());
-        factorySuppliers.add(
-                () ->
-                        Iterators.transform(
-                                pluginManager.load(FileSystemFactory.class),
-                                PluginFileSystemFactory::of));
-        final List<FileSystemFactory> fileSystemFactories =
-                loadFileSystemFactories(factorySuppliers);
-
-        if (fileSystemFactories.isEmpty()) {
-            throw new UnsupportedFileSystemSchemeException(
-                    "Could not find a file system implementation for scheme '"
-                            + fsUri.getScheme()
-                            + "'. The scheme is not directly supported by Flink and no Hadoop file system to "
-                            + "support this scheme could be loaded. For a full list of supported file systems, "
-                            + "please see https://ci.apache.org/projects/flink/flink-docs-stable/ops/filesystems/.");
-        }
-
-        FileSystemFactory fileSystemFactory = null;
-        for (FileSystemFactory factory : fileSystemFactories) {
-            if (factory.getScheme().equals(fsUri.getScheme())) {
-                factory.configure(config);
-                fileSystemFactory = factory;
-            }
-        }
-        final URI uri;
-
-        if (fsUri.getScheme() != null) {
-            uri = fsUri;
-        } else {
-            // Apply the default fs scheme
-            final URI defaultUri = getDefaultFsUri();
-            URI rewrittenUri = null;
-
-            try {
-                rewrittenUri =
-                        new URI(
-                                defaultUri.getScheme(),
-                                null,
-                                defaultUri.getHost(),
-                                defaultUri.getPort(),
-                                fsUri.getPath(),
-                                null,
-                                null);
-            } catch (URISyntaxException e) {
-                // for local URIs, we make one more try to repair the path by making it absolute
-                if (defaultUri.getScheme().equals("file")) {
-                    try {
-                        rewrittenUri =
-                                new URI(
-                                        "file",
-                                        null,
-                                        new Path(new File(fsUri.getPath()).getAbsolutePath())
-                                                .toUri()
-                                                .getPath(),
-                                        null);
-                    } catch (URISyntaxException ignored) {
-                        // could not help it...
-                    }
-                }
-            }
-
-            if (rewrittenUri != null) {
-                uri = rewrittenUri;
-            } else {
-                throw new IOException(
-                        "The file system URI '"
-                                + fsUri
-                                + "' declares no scheme and cannot be interpreted relative to the default file system URI ("
-                                + defaultUri
-                                + ").");
-            }
-        }
-
-        // print a helpful pointer for malformed local URIs (happens a lot to new users)
-        if (uri.getScheme().equals("file")
-                && uri.getAuthority() != null
-                && !uri.getAuthority().isEmpty()) {
-            String supposedUri = "file:///" + uri.getAuthority() + uri.getPath();
-
-            throw new IOException(
-                    "Found local file path with authority '"
-                            + uri.getAuthority()
-                            + "' in path '"
-                            + uri.toString()
-                            + "'. Hint: Did you forget a slash? (correct path would be '"
-                            + supposedUri
-                            + "')");
-        }
-
-        // this "default" initialization makes sure that the FileSystem class works
-        // even when not configured with an explicit Flink configuration, like on
-        // JobManager or TaskManager setup
-
-        // Try to create a new file system
-        final FileSystem fs;
-        ClassLoader classLoader = fileSystemFactory.getClassLoader();
-        try (TemporaryClassLoaderContext ignored = TemporaryClassLoaderContext.of(classLoader)) {
-            fs = fileSystemFactory.create(uri);
-        }
-        return fs;
-    }
-
-    /**
      * Initializes the shared file system settings.
      *
      * <p>The given configuration is passed to each file system factory to initialize the respective
@@ -433,7 +316,7 @@ public abstract class FileSystem {
      * @param pluginManager optional plugin manager that is used to initialized filesystems provided
      *     as plugins.
      */
-    public static void initialize(Configuration config, PluginManager pluginManager)
+    public static void initialize(Configuration config, @Nullable PluginManager pluginManager)
             throws IllegalConfigurationException {
 
         LOCK.lock();
@@ -636,7 +519,7 @@ public abstract class FileSystem {
                                         + ".org/projects/flink/flink-docs-stable/ops/plugins.html for more information. If you want to "
                                         + "use a Hadoop file system for that scheme, please add the scheme to the configuration fs"
                                         + ".allowed-fallback-filesystems. For a full list of supported file systems, "
-                                        + "please see https://ci.apache.org/projects/flink/flink-docs-stable/ops/filesystems/.",
+                                        + "please see https://nightlies.apache.org/flink/flink-docs-stable/ops/filesystems/.",
                                 uri.getScheme(),
                                 plugins.size() == 1 ? "" : "s",
                                 String.join(", ", plugins)));
@@ -649,7 +532,7 @@ public abstract class FileSystem {
                                     + uri.getScheme()
                                     + "'. The scheme is not directly supported by Flink and no Hadoop file system to "
                                     + "support this scheme could be loaded. For a full list of supported file systems, "
-                                    + "please see https://ci.apache.org/projects/flink/flink-docs-stable/ops/filesystems/.",
+                                    + "please see https://nightlies.apache.org/flink/flink-docs-stable/ops/filesystems/.",
                             e);
                 }
             }
@@ -1195,7 +1078,10 @@ public abstract class FileSystem {
             try {
                 FileSystemFactory factory = iter.next();
                 list.add(factory);
-                LOG.debug("Added file system {}:{}", factory.getScheme(), factory.toString());
+                LOG.debug(
+                        "Added file system {}:{}",
+                        factory.getScheme(),
+                        factory.getClass().getSimpleName());
             } catch (Throwable t) {
                 // catching Throwable here to handle various forms of class loading
                 // and initialization errors

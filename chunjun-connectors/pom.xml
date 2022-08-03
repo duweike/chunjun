@@ -22,7 +22,7 @@
 		<module>chunjun-connector-stream</module>
 
 		<!--MQ-->
-		<module>chunjun-connector-kafka</module>
+<!--		<module>chunjun-connector-kafka</module>-->
 <!--		<module>chunjun-connector-emqx</module>-->
 
 		<!--RDB-->
@@ -57,8 +57,8 @@
 <!--		<module>chunjun-connector-hbase-1.4</module>-->
 <!--		<module>chunjun-connector-elasticsearch5</module>-->
 <!--		<module>chunjun-connector-elasticsearch6</module>-->
-		<module>chunjun-connector-elasticsearch7</module>
-		<module>chunjun-connector-elasticsearch-base</module>
+<!--		<module>chunjun-connector-elasticsearch7</module>-->
+<!--		<module>chunjun-connector-elasticsearch-base</module>-->
 <!--		<module>chunjun-connector-redis</module>-->
 <!--		<module>chunjun-connector-mongodb</module>-->
 <!--		<module>chunjun-connector-solr</module>-->
