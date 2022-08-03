@@ -64,7 +64,7 @@ import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.expressions.Expression;
-import org.apache.flink.table.expressions.ExpressionParser;
+import org.apache.flink.table.expressions.ExpressionParserImpl;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.factories.TableFactoryService;
 import org.apache.flink.table.types.DataType;
@@ -244,7 +244,8 @@ public class Main {
             DataStream<RowData> sourceDataStream) {
         String fieldNames =
                 String.join(ConstantValue.COMMA_SYMBOL, config.getReader().getFieldNameList());
-        List<Expression> expressionList = ExpressionParser.parseExpressionList(fieldNames);
+        ExpressionParserImpl expressionParser = new ExpressionParserImpl();
+        List<Expression> expressionList = expressionParser.parseExpressionList(fieldNames);
         Table sourceTable =
                 tableEnv.fromDataStream(
                         sourceDataStream, expressionList.toArray(new Expression[0]));

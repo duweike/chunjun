@@ -67,7 +67,7 @@
       <dependency>
           <groupId>com.dtstack.chunjun</groupId>
           <artifactId>chunjun-connector-stream</artifactId>
-          <version>1.12-SNAPSHOT</version>
+          <version>1.15-SNAPSHOT</version>
       </dependency>
       ```
 <br />  
@@ -161,12 +161,12 @@
         <dependency>
             <groupId>com.dtstack.chunjun</groupId>
             <artifactId>chunjun-core</artifactId>
-            <version>1.12-SNAPSHOT</version>
+            <version>1.15-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.dtstack.chunjun</groupId>
             <artifactId>chunjun-connector-stream</artifactId>
-            <version>1.12-SNAPSHOT</version>
+            <version>1.15-SNAPSHOT</version>
         </dependency>
     ```
 <br />
