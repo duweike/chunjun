@@ -25,16 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -52,8 +47,8 @@ public class LocalTest {
         //        confProperties.setProperty("state.checkpoints.dir", "file:///ck");
         String userDir = System.getProperty("user.dir");
 
-        String jobPath = userDir + "/chunjun-examples/json/stream/stream.json";
-        String chunjunDistDir = userDir + "/start-chunjun-dist";
+        String jobPath = userDir + "/chunjun-examples/sql/stream/stream.sql";
+        String chunjunDistDir = userDir + "/chunjun-dist";
         String s = "";
 
         // 任务配置参数
@@ -80,7 +75,8 @@ public class LocalTest {
             //                    .append(", ")
             //                    .append("\"start-chunjun.dirty-data.max-rows\":\"1000\"")
             //                    .append(", ")
-            //                    .append("\"start-chunjun.dirty-data.max-collect-failed-rows\":\"100\"")
+            //
+            // .append("\"start-chunjun.dirty-data.max-collect-failed-rows\":\"100\"")
             //                    .append(", ")
             //
             // .append("\"start-chunjun.dirty-data.jdbc.url\":\"jdbc:mysql://localhost:3306/tiezhu\"")
@@ -91,7 +87,8 @@ public class LocalTest {
             //                    .append(", ")
             //                    .append("\"start-chunjun.dirty-data.jdbc.database\":\"tiezhu\"")
             //                    .append(", ")
-            //                    .append("\"start-chunjun.dirty-data.jdbc.table\":\"chunjun_dirty_data\"")
+            //
+            // .append("\"start-chunjun.dirty-data.jdbc.table\":\"chunjun_dirty_data\"")
             //                    .append(",")
             //                    .append("\"start-chunjun.dirty-data.jdbc.batch-size\":\"10\"")
             //                    .append(", ")
@@ -123,7 +120,8 @@ public class LocalTest {
             //                    .append(", ")
             //                    .append("\"start-chunjun.dirty-data.max-rows\":\"1000\"")
             //                    .append(", ")
-            //                    .append("\"start-chunjun.dirty-data.max-collect-failed-rows\":\"100\"")
+            //
+            // .append("\"start-chunjun.dirty-data.max-collect-failed-rows\":\"100\"")
             //                    .append(", ")
             //
             // .append("\"start-chunjun.dirty-data.jdbc.url\":\"jdbc:mysql://localhost:3306/tiezhu\"")
@@ -134,7 +132,8 @@ public class LocalTest {
             //                    .append(", ")
             //                    .append("\"start-chunjun.dirty-data.jdbc.database\":\"tiezhu\"")
             //                    .append(", ")
-            //                    .append("\"start-chunjun.dirty-data.jdbc.table\":\"chunjun_dirty_data\"")
+            //
+            // .append("\"start-chunjun.dirty-data.jdbc.table\":\"chunjun_dirty_data\"")
             //                    .append(",")
             //                    .append("\"start-chunjun.dirty-data.jdbc.batch-size\":\"10\"")
             //                    .append(", ")
