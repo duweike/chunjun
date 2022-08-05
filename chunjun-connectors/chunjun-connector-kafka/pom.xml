@@ -122,6 +122,12 @@
 								</filter>
 
 								<filter>
+									<artifact>org.apache.flink:flink-avro-confluent-registry</artifact>
+									<excludes>
+										<exclude>META-INF/services/*</exclude>
+									</excludes>
+								</filter>
+								<filter>
 									<artifact>org.apache.flink:flink-avro</artifact>
 									<excludes>
 										<exclude>META-INF/services/*</exclude>
