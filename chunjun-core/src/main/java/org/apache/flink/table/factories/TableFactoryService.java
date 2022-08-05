@@ -47,6 +47,9 @@ import static org.apache.flink.table.descriptors.ConnectorDescriptorValidator.CO
 @Internal
 public class TableFactoryService {
 
+    private static final ThreadLocal<com.dtstack.chunjun.util.FactoryHelper>
+            factoryHelperThreadLocal = new ThreadLocal<>();
+
     /** Prefix for format-related properties. */
     public static final String FORMAT = "format";
 
@@ -479,5 +482,14 @@ public class TableFactoryService {
         } else {
             return keys;
         }
+    }
+
+    public static void setFactoryUtilHelp(com.dtstack.chunjun.util.FactoryHelper factoryHelper) {
+        factoryHelperThreadLocal.set(factoryHelper);
+    }
+
+    public static ThreadLocal<com.dtstack.chunjun.util.FactoryHelper>
+            getFactoryHelperThreadLocal() {
+        return factoryHelperThreadLocal;
     }
 }

@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.factories;
 
+import com.dtstack.chunjun.constants.ConstantValue;
+
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.ConfigOption;
@@ -73,6 +75,9 @@ import static org.apache.flink.table.module.CommonModuleOptions.MODULE_TYPE;
 public final class FactoryUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(FactoryUtil.class);
+
+    private static final ThreadLocal<com.dtstack.chunjun.util.FactoryHelper>
+            factoryHelperThreadLocal = new ThreadLocal<>();
 
     /**
      * Describes the property version. This can be used for backwards compatibility in case the
@@ -514,6 +519,15 @@ public final class FactoryUtil {
     @SuppressWarnings("unchecked")
     public static <T extends Factory> T discoverFactory(
             ClassLoader classLoader, Class<T> factoryClass, String factoryIdentifier) {
+
+        if (factoryIdentifier.toLowerCase().endsWith("-x")) {
+            String s = factoryIdentifier.substring(0, factoryIdentifier.length() - 2);
+            com.dtstack.chunjun.util.FactoryHelper factoryHelper = factoryHelperThreadLocal.get();
+            if (factoryHelper != null) {
+                factoryHelper.registerCachedFile(s, classLoader, ConstantValue.CONNECTOR_DIR_NAME);
+            }
+        }
+
         final List<Factory> factories = discoverFactories(classLoader);
 
         final List<Factory> foundFactories =
@@ -950,7 +964,7 @@ public final class FactoryUtil {
      * @see #createCatalogFactoryHelper(CatalogFactory, CatalogFactory.Context)
      */
     @PublicEvolving
-    public static class CatalogFactoryHelper extends FactoryHelper<CatalogFactory> {
+    public static class CatalogFactoryHelper extends FactoryUtil.FactoryHelper<CatalogFactory> {
 
         public CatalogFactoryHelper(CatalogFactory catalogFactory, CatalogFactory.Context context) {
             super(catalogFactory, context.getOptions(), PROPERTY_VERSION);
@@ -963,7 +977,7 @@ public final class FactoryUtil {
      * @see #createModuleFactoryHelper(ModuleFactory, ModuleFactory.Context)
      */
     @PublicEvolving
-    public static class ModuleFactoryHelper extends FactoryHelper<ModuleFactory> {
+    public static class ModuleFactoryHelper extends FactoryUtil.FactoryHelper<ModuleFactory> {
         public ModuleFactoryHelper(ModuleFactory moduleFactory, ModuleFactory.Context context) {
             super(moduleFactory, context.getOptions(), PROPERTY_VERSION);
         }
@@ -976,7 +990,7 @@ public final class FactoryUtil {
      * @see #createTableFactoryHelper(DynamicTableFactory, DynamicTableFactory.Context)
      */
     @PublicEvolving
-    public static class TableFactoryHelper extends FactoryHelper<DynamicTableFactory> {
+    public static class TableFactoryHelper extends FactoryUtil.FactoryHelper<DynamicTableFactory> {
 
         private final DynamicTableFactory.Context context;
 
@@ -1328,5 +1342,14 @@ public final class FactoryUtil {
 
     private FactoryUtil() {
         // no instantiation
+    }
+
+    public static void setFactoryUtilHelp(com.dtstack.chunjun.util.FactoryHelper factoryHelper) {
+        factoryHelperThreadLocal.set(factoryHelper);
+    }
+
+    public static ThreadLocal<com.dtstack.chunjun.util.FactoryHelper>
+            getFactoryHelperThreadLocal() {
+        return factoryHelperThreadLocal;
     }
 }
